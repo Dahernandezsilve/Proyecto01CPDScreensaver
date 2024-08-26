@@ -2,3 +2,5 @@ src/
 *.dll
 *exe
 .vscode/
+cmake-build-debug
+.idea
