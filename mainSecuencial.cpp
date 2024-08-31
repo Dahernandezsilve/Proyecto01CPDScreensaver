@@ -4,7 +4,13 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cstdio>
 #include "gameofLife.h"
+
+// Variables para FPS
+Uint32 startTime = 0;
+int frameCount = 0;
+float fps = 0.0f;
 
 // Configuración de la ventana y renderizador
 const int WIDTH = 800;
@@ -82,7 +88,6 @@ void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y
     SDL_DestroyTexture(frameTexture);
 }
 
-
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <max_gifs>" << std::endl;
@@ -125,6 +130,9 @@ int main(int argc, char* argv[]) {
 
     bool running = true;
     SDL_Event e;
+
+    // Inicializa las variables del contador de FPS
+    startTime = SDL_GetTicks();
 
     while (running) {
         while (SDL_PollEvent(&e) != 0) {
@@ -178,6 +186,19 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_RenderPresent(renderer);
+
+        // Actualización de FPS
+        frameCount++;
+        if (SDL_GetTicks() - startTime >= 1000) {  // Cada segundo
+            fps = frameCount / ((SDL_GetTicks() - startTime) / 1000.0f);
+            startTime = SDL_GetTicks();
+            frameCount = 0;
+
+            // Actualiza el título de la ventana con los FPS
+            char title[50];
+            snprintf(title, sizeof(title), "Screen Saver - FPS: %.2f", fps);
+            SDL_SetWindowTitle(window, title);
+        }
 
         SDL_Delay(55);
     }
