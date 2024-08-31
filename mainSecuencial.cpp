@@ -1,11 +1,20 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
 #include "gameofLife.h"
 
 // Configuración de la ventana y renderizador
 const int WIDTH = 800;
 const int HEIGHT = 600;
+
+// Estructura para representar cada GIF en la pantalla
+struct GIFInstance {
+    int posX, posY;
+    int velX, velY;
+};
 
 // Función para crear la ventana
 SDL_Window* createWindow(const char* title, int width, int height) {
@@ -71,6 +80,18 @@ void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y
 }
 
 int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <max_gifs>" << std::endl;
+        return 1;
+    }
+
+    int max_gifs = std::atoi(argv[1]);
+
+    if (max_gifs <= 0) {
+        std::cerr << "The number of GIFs must be greater than 0." << std::endl;
+        return 1;
+    }
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
@@ -82,11 +103,17 @@ int main(int argc, char* argv[]) {
     SDL_Renderer* renderer = createRenderer(window);
     if (!renderer) return 1;
 
-    IMG_Animation* gifAnimation = loadGIF("files/nyancat1.gif");
+    IMG_Animation* gifAnimation = loadGIF("files/nyancat3.gif");
     if (!gifAnimation) return 1;
 
     std::srand(std::time(nullptr));
     initializeGameOfLife();
+
+    // Lista para almacenar todas las instancias de GIFs
+    std::vector<GIFInstance> gifs;
+
+    // Crear la primera instancia de GIF
+    gifs.push_back({100, 100, 5, 5});
 
     bool running = true;
     SDL_Event e;
@@ -98,11 +125,51 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Bandera para controlar si se ha añadido un nuevo GIF en este frame
+        bool newGifAdded = false;
+
+                // Actualizar las posiciones de todos los GIFs
+                // Actualizar las posiciones de todos los GIFs
+        for (auto& gif : gifs) {
+            gif.posX += gif.velX;
+            gif.posY += gif.velY;
+
+            bool bounced = false;
+
+            // Rebotar en los bordes de la ventana
+            if (gif.posX <= 0 || gif.posX + 165 >= WIDTH) {
+                gif.velX = -gif.velX;
+                bounced = true;
+            }
+            if (gif.posY <= 0 || gif.posY + 65 >= HEIGHT) {
+                gif.velY = -gif.velY;
+                bounced = true;
+            }
+
+            // Si ha rebotado y no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
+            if (bounced && gifs.size() < max_gifs && !newGifAdded) {
+                // Generar posición y velocidad para el nuevo GIF
+                int newPosX = std::rand() % (WIDTH - 165);
+                int newPosY = std::rand() % (HEIGHT - 65);
+                int newVelX = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
+                int newVelY = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
+
+                gifs.push_back({newPosX, newPosY, newVelX, newVelY});
+                newGifAdded = true; // Marcar que se ha añadido un GIF en este frame
+            }
+        }
+
         updateGameOfLife();
-        
+
+
         SDL_RenderClear(renderer);
-        renderBuffer(renderer); // Renderiza el Game of Life en el fondo
-        renderGIF(renderer, gifAnimation, 100, 100, 250, 300); // Renderiza el GIF sobre el Game of Life
+        renderBuffer(renderer);
+
+        // Renderizar todos los GIFs
+        for (const auto& gif : gifs) {
+            renderGIF(renderer, gifAnimation, gif.posX, gif.posY, 165, 65);
+        }
+
         SDL_RenderPresent(renderer);
 
         SDL_Delay(55);
