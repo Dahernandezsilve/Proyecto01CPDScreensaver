@@ -62,7 +62,7 @@ IMG_Animation* loadGIF(const char* filePath) {
 }
 
 // Función para renderizar el GIF en la pantalla
-void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y, int w, int h) {
+void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y, int w, int h, bool flip) {
     static int frame = 0;
     static Uint32 frameTime = SDL_GetTicks();
 
@@ -75,9 +75,13 @@ void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y
     SDL_Rect dstRect = { x, y, w, h };
     SDL_Texture* frameTexture = SDL_CreateTextureFromSurface(renderer, gifAnimation->frames[frame]);
 
-    SDL_RenderCopy(renderer, frameTexture, NULL, &dstRect);
+    // Usar SDL_RendererFlip para voltear la imagen si es necesario
+    SDL_RendererFlip flipType = flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+
+    SDL_RenderCopyEx(renderer, frameTexture, NULL, &dstRect, 0, NULL, flipType);
     SDL_DestroyTexture(frameTexture);
 }
+
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -112,8 +116,12 @@ int main(int argc, char* argv[]) {
     // Lista para almacenar todas las instancias de GIFs
     std::vector<GIFInstance> gifs;
 
+    // Lista para almacenar si la imagen está volteada
+    std::vector<bool> flipFlags;
+
     // Crear la primera instancia de GIF
     gifs.push_back({100, 100, 5, 5});
+    flipFlags.push_back(false);
 
     bool running = true;
     SDL_Event e;
@@ -128,46 +136,45 @@ int main(int argc, char* argv[]) {
         // Bandera para controlar si se ha añadido un nuevo GIF en este frame
         bool newGifAdded = false;
 
-                // Actualizar las posiciones de todos los GIFs
-                // Actualizar las posiciones de todos los GIFs
-        for (auto& gif : gifs) {
-            gif.posX += gif.velX;
-            gif.posY += gif.velY;
+        // Actualizar las posiciones de todos los GIFs
+        for (size_t i = 0; i < gifs.size(); ++i) {
+            gifs[i].posX += gifs[i].velX;
+            gifs[i].posY += gifs[i].velY;
 
             bool bounced = false;
 
             // Rebotar en los bordes de la ventana
-            if (gif.posX <= 0 || gif.posX + 165 >= WIDTH) {
-                gif.velX = -gif.velX;
+            if (gifs[i].posX <= 0 || gifs[i].posX + 165 >= WIDTH) {
+                gifs[i].velX = -gifs[i].velX;
+                flipFlags[i] = !flipFlags[i]; // Voltear la imagen horizontalmente
                 bounced = true;
             }
-            if (gif.posY <= 0 || gif.posY + 65 >= HEIGHT) {
-                gif.velY = -gif.velY;
+            if (gifs[i].posY <= 0 || gifs[i].posY + 65 >= HEIGHT) {
+                gifs[i].velY = -gifs[i].velY;
                 bounced = true;
             }
 
-            // Si ha rebotado y no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
+            // Si ha rebotado, aún no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
             if (bounced && gifs.size() < max_gifs && !newGifAdded) {
-                // Generar posición y velocidad para el nuevo GIF
                 int newPosX = std::rand() % (WIDTH - 165);
                 int newPosY = std::rand() % (HEIGHT - 65);
                 int newVelX = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
                 int newVelY = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
 
                 gifs.push_back({newPosX, newPosY, newVelX, newVelY});
+                flipFlags.push_back(newVelX < 0); // Determina si el nuevo GIF debe estar volteado inicialmente
                 newGifAdded = true; // Marcar que se ha añadido un GIF en este frame
             }
         }
 
         updateGameOfLife();
 
-
         SDL_RenderClear(renderer);
-        renderBuffer(renderer);
+        renderBuffer(renderer); // Renderiza el Game of Life en el fondo
 
         // Renderizar todos los GIFs
-        for (const auto& gif : gifs) {
-            renderGIF(renderer, gifAnimation, gif.posX, gif.posY, 165, 65);
+        for (size_t i = 0; i < gifs.size(); ++i) {
+            renderGIF(renderer, gifAnimation, gifs[i].posX, gifs[i].posY, 165, 65, flipFlags[i]);
         }
 
         SDL_RenderPresent(renderer);
