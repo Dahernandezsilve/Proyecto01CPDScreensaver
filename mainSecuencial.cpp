@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_audio.h>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -21,6 +22,31 @@ struct GIFInstance {
     int posX, posY;
     int velX, velY;
 };
+
+// Variables globales para el audio
+SDL_AudioSpec wavSpec;
+Uint32 wavLength;
+Uint8* wavBuffer;
+SDL_AudioDeviceID audioDevice;
+
+// Callback de audio para manejar la reproducción
+void audioCallback(void* userdata, Uint8* stream, int len) {
+    static Uint32 audioPosition = 0; // Posición actual en el buffer de audio
+
+    if (audioPosition >= wavLength) { 
+        return; // No más audio para reproducir
+    }
+
+    // Ajustar la longitud si el audio restante es menor que el tamaño de stream
+    Uint32 audioRemaining = wavLength - audioPosition;
+    Uint32 audioLength = (len > audioRemaining) ? audioRemaining : len;
+
+    // Copiar los datos de audio al stream
+    SDL_memcpy(stream, wavBuffer + audioPosition, audioLength);
+
+    // Avanzar la posición
+    audioPosition += audioLength;
+}
 
 // Función para crear la ventana
 SDL_Window* createWindow(const char* title, int width, int height) {
@@ -101,10 +127,33 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
     }
+
+    // Cargar el archivo de sonido (asegúrate de tener un archivo sound.wav en la carpeta)
+    if (SDL_LoadWAV("files/nyancatmusic.wav", &wavSpec, &wavBuffer, &wavLength) == NULL) {
+        std::cerr << "Failed to load WAV file! SDL Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
+
+    // Establecer el callback de audio
+    wavSpec.callback = audioCallback;
+    wavSpec.userdata = NULL;
+
+    // Abrir el dispositivo de audio
+    audioDevice = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
+    if (audioDevice == 0) {
+        std::cerr << "Failed to open audio device! SDL Error: " << SDL_GetError() << std::endl;
+        SDL_FreeWAV(wavBuffer);
+        SDL_Quit();
+        return 1;
+    }
+
+    // Iniciar la reproducción de audio
+    SDL_PauseAudioDevice(audioDevice, 0); // 0 para iniciar la reproducción
 
     SDL_Window* window = createWindow("Screen Saver", WIDTH, HEIGHT);
     if (!window) return 1;
@@ -209,6 +258,12 @@ int main(int argc, char* argv[]) {
     SDL_free(gifAnimation);
 
     IMG_Quit();
+
+    SDL_PauseAudioDevice(audioDevice, 1);
+    SDL_CloseAudioDevice(audioDevice);
+
+    SDL_FreeWAV(wavBuffer);
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
