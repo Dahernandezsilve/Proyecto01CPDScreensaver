@@ -1,9 +1,11 @@
-#include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <iostream>
+#include "gameofLife.h"
 
-#define WIDTH 800
-#define HEIGHT 600
+// Configuración de la ventana y renderizador
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
 // Función para crear la ventana
 SDL_Window* createWindow(const char* title, int width, int height) {
@@ -83,10 +85,11 @@ int main(int argc, char* argv[]) {
     IMG_Animation* gifAnimation = loadGIF("files/nyancat1.gif");
     if (!gifAnimation) return 1;
 
+    std::srand(std::time(nullptr));
+    initializeGameOfLife();
+
     bool running = true;
     SDL_Event e;
-    int frame = 0;
-    Uint32 frameTime = SDL_GetTicks();
 
     while (running) {
         while (SDL_PollEvent(&e) != 0) {
@@ -95,17 +98,14 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        Uint32 currentTime = SDL_GetTicks();
-        if (currentTime - frameTime >= gifAnimation->delays[frame]) {
-            frame = (frame + 1) % gifAnimation->count;
-            frameTime = currentTime;
-        }
-
+        updateGameOfLife();
+        
         SDL_RenderClear(renderer);
-        renderGIF(renderer, gifAnimation, 100, 100, 250, 300);
+        renderBuffer(renderer); // Renderiza el Game of Life en el fondo
+        renderGIF(renderer, gifAnimation, 100, 100, 250, 300); // Renderiza el GIF sobre el Game of Life
         SDL_RenderPresent(renderer);
 
-        SDL_Delay(16);
+        SDL_Delay(55);
     }
 
     for (int i = 0; i < gifAnimation->count; ++i) {
