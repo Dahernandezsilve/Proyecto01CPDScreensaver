@@ -1,6 +1,6 @@
 src/
 *.dll
-*exe
+*.exe
 .vscode/
 cmake-build-debug
 .idea
