@@ -190,10 +190,9 @@ int main(int argc, char* argv[]) {
     bool running = true;
     SDL_Event e;
 
-    // Inicializa las variables del contador de FPS
-
     omp_set_num_threads(max_gifs);
 
+    // Inicializa las variables del contador de FPS
     Uint32 frameStart;
     int frameTime;
     while (running) {
