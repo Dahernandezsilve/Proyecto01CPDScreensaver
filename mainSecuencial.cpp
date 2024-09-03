@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Iniciar la reproducción de audio
-    SDL_PauseAudioDevice(audioDevice, 0); // 0 para iniciar la reproducción
+    //SDL_PauseAudioDevice(audioDevice, 0); // 0 para iniciar la reproducción
 
     SDL_Window* window = createWindow("Screen Saver", WIDTH, HEIGHT);
     if (!window) return 1;

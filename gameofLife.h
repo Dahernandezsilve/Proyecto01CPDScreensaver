@@ -4,6 +4,8 @@
 #include <random>
 #include <ctime>
 
+using namespace std;
+
 struct Color {
     uint8_t r;
     uint8_t g;
@@ -117,19 +119,19 @@ void updateGameOfLife() {
         }
     }
 
-    std::memcpy(framebuffer, newFramebuffer, sizeof(framebuffer));
+    memcpy(framebuffer, newFramebuffer, sizeof(framebuffer));
 }
 
 void initializeGameOfLife() {
-    std::memset(framebuffer, 0, sizeof(framebuffer));
+    memset(framebuffer, 0, sizeof(framebuffer));
 
-    std::vector<std::pair<int, int>> gliderPattern = {
+    vector<pair<int, int>> gliderPattern = {
             { 1, 0 }, { 2, 1 }, { 0, 2 }, { 1, 2 }, { 2, 2 }
     };
 
     for (int i = 0; i < 30; i++) {  // Aumentar la cantidad de gliders
-        int x = std::rand() % (RENDER_WIDTH - 5);
-        int y = std::rand() % (RENDER_HEIGHT - 5);
+        int x = rand() % (RENDER_WIDTH - 5);
+        int y = rand() % (RENDER_HEIGHT - 5);
 
         for (const auto& point : gliderPattern) {
             int gliderX = point.first + x;
@@ -138,7 +140,7 @@ void initializeGameOfLife() {
         }
     }
 
-    std::vector<std::pair<int, int>> gunPattern = {
+    vector<pair<int, int>> gunPattern = {
             { 0, 4 }, { 1, 4 }, { 0, 5 }, { 1, 5 }, { 10, 4 }, { 10, 5 }, { 10, 6 },
             { 11, 3 }, { 11, 7 }, { 12, 2 }, { 12, 8 }, { 13, 2 }, { 13, 8 }, { 14, 5 },
             { 15, 3 }, { 15, 7 }, { 16, 4 }, { 16, 5 }, { 16, 6 }, { 17, 5 }, { 20, 2 },
@@ -148,8 +150,8 @@ void initializeGameOfLife() {
     };
 
     for (int i = 0; i < 15; i++) {  // Aumentar la cantidad de guns
-        int x = std::rand() % (RENDER_WIDTH - 35);
-        int y = std::rand() % (RENDER_HEIGHT - 10);
+        int x = rand() % (RENDER_WIDTH - 35);
+        int y = rand() % (RENDER_HEIGHT - 10);
 
         for (const auto& point : gunPattern) {
             int gunX = point.first + x;
@@ -158,13 +160,13 @@ void initializeGameOfLife() {
         }
     }
 
-    std::vector<std::pair<int, int>> smallGliderPattern = {
+    vector<pair<int, int>> smallGliderPattern = {
             { 0, 0 }, { 1, 0 }, { 2, 0 }, { 0, 1 }, { 1, 2 }
     };
 
     for (int i = 0; i < 50; i++) {  // Mantener la cantidad de small gliders
-        int x = std::rand() % (RENDER_WIDTH - 2);
-        int y = std::rand() % (RENDER_HEIGHT - 2);
+        int x = rand() % (RENDER_WIDTH - 2);
+        int y = rand() % (RENDER_HEIGHT - 2);
 
         for (const auto& point : smallGliderPattern) {
             int gliderX = point.first + x;
