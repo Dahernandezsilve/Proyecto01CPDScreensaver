@@ -1,0 +1,7 @@
+all:
+	g++ -o mainSecuencial mainSecuencial.cpp `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image
+	g++ -o mainParalelo mainParalelo.cpp  `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image -fopenmp
+
+run:
+	./mainSecuencial 5
+	./mainParalelo 5

@@ -1,6 +1,6 @@
-src/
-*.dll
-*.exe
-.vscode/
-cmake-build-debug
-.idea
+*
+
+!*.cpp
+!Makefile_Linux
+!*.h
+!README.md
