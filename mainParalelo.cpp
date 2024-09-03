@@ -177,6 +177,9 @@ int main(int argc, char* argv[]) {
 
     setWindowIcon(window, "files/codificacion.png");
 
+    SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    SDL_SetCursor(cursor);
+
     SDL_Renderer* renderer = createRenderer(window);
     if (!renderer) return 1;
 
@@ -189,6 +192,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < gifAnimation->count; ++i) {
         gifTextures[i] = SDL_CreateTextureFromSurface(renderer, gifAnimation->frames[i]);
     }
+
 
     srand(time(nullptr));
     initializeGameOfLife();
@@ -287,7 +291,7 @@ int main(int argc, char* argv[]) {
 
             // Actualiza el título de la ventana con los FPS
             char title[50];
-            snprintf(title, sizeof(title), "[ScreenSaver] - FPS: %.2f", fps);
+            snprintf(title, sizeof(title), "[ScreenSaver- Parallel] - FPS: %.2f", fps);
             SDL_SetWindowTitle(window, title);
         }
     }
@@ -309,7 +313,7 @@ int main(int argc, char* argv[]) {
     SDL_CloseAudioDevice(audioDevice);
 
     SDL_FreeWAV(wavBuffer);
-
+    SDL_FreeCursor(cursor);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
