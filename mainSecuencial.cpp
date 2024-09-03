@@ -211,20 +211,20 @@ int main(int argc, char* argv[]) {
             bool bounced = false;
 
             // Rebotar en los bordes de la ventana
-            if (gifs[i].posX <= 0 || gifs[i].posX + 165 >= WIDTH) {
+            if (gifs[i].posX <= 0 || gifs[i].posX + 120 >= WIDTH) {
                 gifs[i].velX = -gifs[i].velX;
                 flipFlags[i] = !flipFlags[i]; // Voltear la imagen horizontalmente
                 bounced = true;
             }
-            if (gifs[i].posY <= 0 || gifs[i].posY + 65 >= HEIGHT) {
+            if (gifs[i].posY <= 0 || gifs[i].posY + 30 >= HEIGHT) {
                 gifs[i].velY = -gifs[i].velY;
                 bounced = true;
             }
 
             // Si ha rebotado, aún no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
             if (bounced && gifs.size() < max_gifs && !newGifAdded) {
-                int newPosX = rand() % (WIDTH - 165);
-                int newPosY = rand() % (HEIGHT - 65);
+                int newPosX = rand() % (WIDTH - 120);
+                int newPosY = rand() % (HEIGHT - 30);
                 int newVelX = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
                 int newVelY = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
 

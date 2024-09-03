@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
                 flipFlags[i] = !flipFlags[i]; // Voltear la imagen horizontalmente
                 bounced = true;
             }
-            if (gifs[i].posY <= 0 || gifs[i].posY + 20 >= HEIGHT) {
+            if (gifs[i].posY <= 0 || gifs[i].posY + 30 >= HEIGHT) {
                 gifs[i].velY = -gifs[i].velY;
                 bounced = true;
             }
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
             {
                 if (bounced && gifs.size() < max_gifs && !newGifAdded) {
                     int newPosX = rand() % (WIDTH - 120);
-                    int newPosY = rand() % (HEIGHT - 20);
+                    int newPosY = rand() % (HEIGHT - 30);
                     int newVelX = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
                     int newVelY = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
 
