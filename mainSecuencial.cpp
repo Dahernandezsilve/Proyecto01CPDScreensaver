@@ -8,6 +8,8 @@
 #include <cstdio>
 #include "gameofLife.h"
 
+using namespace std;
+
 // Variables para FPS
 Uint32 startTime = 0;
 int frameCount = 0;
@@ -52,7 +54,7 @@ void audioCallback(void* userdata, Uint8* stream, int len) {
 SDL_Window* createWindow(const char* title, int width, int height) {
     SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
     if (!window) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
     }
     return window;
 }
@@ -61,7 +63,7 @@ SDL_Window* createWindow(const char* title, int width, int height) {
 SDL_Renderer* createRenderer(SDL_Window* window) {
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << endl;
         SDL_DestroyWindow(window);
     }
     return renderer;
@@ -70,13 +72,13 @@ SDL_Renderer* createRenderer(SDL_Window* window) {
 // Función para cargar el GIF
 IMG_Animation* loadGIF(const char* filePath) {
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+        cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
         return nullptr;
     }
 
     SDL_RWops* rwop = SDL_RWFromFile(filePath, "rb");
     if (!rwop) {
-        std::cerr << "Failed to load GIF! SDL Error: " << SDL_GetError() << std::endl;
+        cerr << "Failed to load GIF! SDL Error: " << SDL_GetError() << endl;
         IMG_Quit();
         return nullptr;
     }
@@ -85,7 +87,7 @@ IMG_Animation* loadGIF(const char* filePath) {
     SDL_RWclose(rwop);
 
     if (!gifAnimation) {
-        std::cerr << "Failed to load GIF animation! SDL_image Error: " << IMG_GetError() << std::endl;
+        cerr << "Failed to load GIF animation! SDL_image Error: " << IMG_GetError() << endl;
         IMG_Quit();
         return nullptr;
     }
@@ -116,25 +118,25 @@ void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <max_gifs>" << std::endl;
+        cerr << "Usage: " << argv[0] << " <max_gifs>" << endl;
         return 1;
     }
 
-    int max_gifs = std::atoi(argv[1]);
+    int max_gifs = atoi(argv[1]);
 
     if (max_gifs <= 0) {
-        std::cerr << "The number of GIFs must be greater than 0." << std::endl;
+        cerr << "The number of GIFs must be greater than 0." << endl;
         return 1;
     }
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << endl;
         return 1;
     }
 
     // Cargar el archivo de sonido (asegúrate de tener un archivo sound.wav en la carpeta)
     if (SDL_LoadWAV("files/nyancatmusic.wav", &wavSpec, &wavBuffer, &wavLength) == NULL) {
-        std::cerr << "Failed to load WAV file! SDL Error: " << SDL_GetError() << std::endl;
+        cerr << "Failed to load WAV file! SDL Error: " << SDL_GetError() << endl;
         SDL_Quit();
         return 1;
     }
@@ -146,7 +148,7 @@ int main(int argc, char* argv[]) {
     // Abrir el dispositivo de audio
     audioDevice = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
     if (audioDevice == 0) {
-        std::cerr << "Failed to open audio device! SDL Error: " << SDL_GetError() << std::endl;
+        cerr << "Failed to open audio device! SDL Error: " << SDL_GetError() << endl;
         SDL_FreeWAV(wavBuffer);
         SDL_Quit();
         return 1;
@@ -164,14 +166,14 @@ int main(int argc, char* argv[]) {
     IMG_Animation* gifAnimation = loadGIF("files/nyancat3.gif");
     if (!gifAnimation) return 1;
 
-    std::srand(std::time(nullptr));
+    srand(time(nullptr));
     initializeGameOfLife();
 
     // Lista para almacenar todas las instancias de GIFs
-    std::vector<GIFInstance> gifs;
+    vector<GIFInstance> gifs;
 
     // Lista para almacenar si la imagen está volteada
-    std::vector<bool> flipFlags;
+    vector<bool> flipFlags;
 
     // Crear la primera instancia de GIF
     gifs.push_back({100, 100, 5, 5});
@@ -213,10 +215,10 @@ int main(int argc, char* argv[]) {
 
             // Si ha rebotado, aún no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
             if (bounced && gifs.size() < max_gifs && !newGifAdded) {
-                int newPosX = std::rand() % (WIDTH - 165);
-                int newPosY = std::rand() % (HEIGHT - 65);
-                int newVelX = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
-                int newVelY = (std::rand() % 7 + 1) * (std::rand() % 2 == 0 ? 1 : -1);
+                int newPosX = rand() % (WIDTH - 165);
+                int newPosY = rand() % (HEIGHT - 65);
+                int newVelX = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
+                int newVelY = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
 
                 gifs.push_back({newPosX, newPosY, newVelX, newVelY});
                 flipFlags.push_back(newVelX < 0); // Determina si el nuevo GIF debe estar volteado inicialmente
