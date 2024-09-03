@@ -15,6 +15,7 @@ using namespace std;
 Uint32 startTime = 0;
 int frameCount = 0;
 float fps = 0.0f;
+const int FRAME_TIME = 1000 / 60;
 
 // Configuración de la ventana y renderizador
 const int WIDTH = 800;
@@ -98,7 +99,7 @@ IMG_Animation* loadGIF(const char* filePath) {
 }
 
 // Función para renderizar el GIF en la pantalla
-void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y, int w, int h, bool flip) {
+void renderGIF(SDL_Renderer* renderer, const vector<SDL_Texture*>& gifTextures, IMG_Animation* gifAnimation, int x, int y, int w, int h, bool flip) {
     static int frame = 0;
     static Uint32 frameTime = SDL_GetTicks();
 
@@ -109,13 +110,11 @@ void renderGIF(SDL_Renderer* renderer, IMG_Animation* gifAnimation, int x, int y
     }
 
     SDL_Rect dstRect = { x, y, w, h };
-    SDL_Texture* frameTexture = SDL_CreateTextureFromSurface(renderer, gifAnimation->frames[frame]);
 
     // Usar SDL_RendererFlip para voltear la imagen si es necesario
     SDL_RendererFlip flipType = flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
-    SDL_RenderCopyEx(renderer, frameTexture, NULL, &dstRect, 0, NULL, flipType);
-    SDL_DestroyTexture(frameTexture);
+    SDL_RenderCopyEx(renderer, gifTextures[frame], NULL, &dstRect, 0, NULL, flipType);
 }
 
 int main(int argc, char* argv[]) {
@@ -168,6 +167,13 @@ int main(int argc, char* argv[]) {
     IMG_Animation* gifAnimation = loadGIF("files/nyancat3.gif");
     if (!gifAnimation) return 1;
 
+    vector<SDL_Texture*> gifTextures;
+    gifTextures.resize(gifAnimation->count);
+
+    for (int i = 0; i < gifAnimation->count; ++i) {
+        gifTextures[i] = SDL_CreateTextureFromSurface(renderer, gifAnimation->frames[i]);
+    }
+
     srand(time(nullptr));
     initializeGameOfLife();
 
@@ -185,11 +191,13 @@ int main(int argc, char* argv[]) {
     SDL_Event e;
 
     // Inicializa las variables del contador de FPS
-    startTime = SDL_GetTicks();
 
     omp_set_num_threads(max_gifs);
 
+    Uint32 frameStart;
+    int frameTime;
     while (running) {
+        frameStart = SDL_GetTicks();
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 running = false;
@@ -240,11 +248,20 @@ int main(int argc, char* argv[]) {
         renderBuffer(renderer); // Renderiza el Game of Life en el fondo
 
         // Renderizar todos los GIFs
+        #pragma omp parallel for shared(gifs, flipFlags, gifTextures) default(none)
         for (size_t i = 0; i < gifs.size(); ++i) {
-            renderGIF(renderer, gifAnimation, gifs[i].posX, gifs[i].posY, 165, 65, flipFlags[i]);
+            renderGIF(renderer, gifTextures, gifAnimation, gifs[i].posX, gifs[i].posY, 165, 65, flipFlags[i]);
         }
 
         SDL_RenderPresent(renderer);
+
+        // Calcular el tiempo que tomó procesar y renderizar
+        frameTime = SDL_GetTicks() - frameStart;
+
+        // Esperar hasta el siguiente frame
+        if (frameTime < FRAME_TIME) {
+            SDL_Delay(FRAME_TIME - frameTime);
+        }
 
         // Actualización de FPS
         frameCount++;
@@ -258,8 +275,11 @@ int main(int argc, char* argv[]) {
             snprintf(title, sizeof(title), "Screen Saver - FPS: %.2f", fps);
             SDL_SetWindowTitle(window, title);
         }
+    }
 
-        SDL_Delay(55);
+    // Liberar recursos
+    for (auto& texture : gifTextures) {
+        SDL_DestroyTexture(texture);
     }
 
     for (int i = 0; i < gifAnimation->count; ++i) {
