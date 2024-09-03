@@ -32,6 +32,21 @@ Uint32 wavLength;
 Uint8* wavBuffer;
 SDL_AudioDeviceID audioDevice;
 
+void setWindowIcon(SDL_Window* window, const char* iconPath) {
+    // Cargar la imagen del icono
+    SDL_Surface* iconSurface = IMG_Load(iconPath);
+    if (!iconSurface) {
+        cerr << "Failed to load icon image! SDL_image Error: " << IMG_GetError() << endl;
+        return;
+    }
+
+    // Establecer la imagen del icono para la ventana
+    SDL_SetWindowIcon(window, iconSurface);
+
+    // Liberar la superficie del icono
+    SDL_FreeSurface(iconSurface);
+}
+
 // Callback de audio para manejar la reproducción
 void audioCallback(void* userdata, Uint8* stream, int len) {
     static Uint32 audioPosition = 0; // Posición actual en el buffer de audio
@@ -159,6 +174,8 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = createWindow("Screen Saver", WIDTH, HEIGHT);
     if (!window) return 1;
 
+    setWindowIcon(window, "files/codificacion.png");
+
     SDL_Renderer* renderer = createRenderer(window);
     if (!renderer) return 1;
 
@@ -263,7 +280,7 @@ int main(int argc, char* argv[]) {
 
             // Actualiza el título de la ventana con los FPS
             char title[50];
-            snprintf(title, sizeof(title), "Screen Saver - FPS: %.2f", fps);
+            snprintf(title, sizeof(title), "[ScreenSaver] - FPS: %.2f", fps);
             SDL_SetWindowTitle(window, title);
         }
     }
