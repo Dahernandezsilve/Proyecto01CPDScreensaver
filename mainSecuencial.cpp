@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Imprimir el tiempo total de ejecución al final
-    cout << "Total Execution Time (Sequential): " << totalExecutionTime << " ms" << endl;
+    cout << "Total Execution Time: " << totalExecutionTime << " ms" << endl;
 
     for (auto& texture : gifTextures) {
         SDL_DestroyTexture(texture);

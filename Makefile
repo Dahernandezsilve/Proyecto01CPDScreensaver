@@ -6,5 +6,5 @@ all:
 	g++ -o mainParalelo mainParalelo2.cpp  `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image -fopenmp
 
 run:
-#./mainSecuencial 5
+	./mainSecuencial 5 100 300 100
 	./mainParalelo 5 100 300 100
