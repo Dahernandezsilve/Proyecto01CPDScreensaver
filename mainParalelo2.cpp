@@ -136,12 +136,15 @@ void renderGIF(SDL_Renderer* renderer, const vector<SDL_Texture*>& gifTextures, 
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <max_gifs>" << endl;
+    if (argc < 4) {
+        cerr << "Usage: " << argv[0] << " <max_gifs> <num_glider> <num_gun> <num_smallGlider>" << endl;
         return 1;
     }
 
     int max_gifs = atoi(argv[1]);
+    int num_glider = atoi(argv[2]);
+    int num_gun = atoi(argv[3]);
+    int num_small_glider = atoi(argv[4]);
 
     if (max_gifs <= 0) {
         cerr << "The number of GIFs must be greater than 0." << endl;
@@ -197,7 +200,7 @@ int main(int argc, char* argv[]) {
     }
 
     srand(time(nullptr));
-    initializeGameOfLife();
+    initializeGameOfLife(num_glider, num_gun, num_small_glider);
 
     // Lista para almacenar todas las instancias de GIFs
     vector<GIFInstance> gifs;
@@ -214,8 +217,11 @@ int main(int argc, char* argv[]) {
 
     Uint32 frameStart;
     int frameTime;
+    Uint32 totalExecutionTime = 0; // Variable para medir el tiempo total de ejecución
+
     while (running) {
         frameStart = SDL_GetTicks();
+        
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 running = false;
@@ -224,7 +230,7 @@ int main(int argc, char* argv[]) {
 
         bool newGifAdded = false;
 
-        // Actualizar las posiciones de todos los GIFs
+        // Actualizar las posiciones de todos los GIFs en paralelo
         #pragma omp parallel
         {
             #pragma omp for
@@ -273,12 +279,14 @@ int main(int argc, char* argv[]) {
 
         // Renderizar todos los GIFs
         for (size_t i = 0; i < gifs.size(); ++i) {
- 
             renderGIF(renderer, gifTextures, gifAnimation, gifs[i].posX, gifs[i].posY, 160, 60, flipFlags[i]);
         }
 
         // Presentar el renderizador
         SDL_RenderPresent(renderer);
+
+        frameTime = SDL_GetTicks() - frameStart;
+        totalExecutionTime += frameTime; // Acumular el tiempo de ejecución
 
         frameTime = SDL_GetTicks() - frameStart;
         if (frameTime < FRAME_TIME) {
@@ -297,6 +305,9 @@ int main(int argc, char* argv[]) {
             SDL_SetWindowTitle(window, title);
         }
     }
+
+    // Imprimir el tiempo total de ejecución al final
+    cout << "Total Execution Time (Parallel): " << totalExecutionTime << " ms" << endl;
 
     // Limpiar recursos
     for (auto texture : gifTextures) {

@@ -123,7 +123,7 @@ void updateGameOfLife() {
     memcpy(framebuffer, newFramebuffer, sizeof(framebuffer));
 }
 
-void initializeGameOfLife() {
+void initializeGameOfLife(int numGlider, int numGuns, int numSmallGlider) {
     memset(framebuffer, 0, sizeof(framebuffer));
 
     vector<pair<int, int>> gliderPattern = {
@@ -133,7 +133,7 @@ void initializeGameOfLife() {
     #pragma omp parallel
     {
         #pragma omp for
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < numGlider; i++) {
             int x = rand() % (RENDER_WIDTH - 5);
             int y = rand() % (RENDER_HEIGHT - 5);
 
@@ -157,7 +157,7 @@ void initializeGameOfLife() {
             { 35, 3 }
     };
 
-    for (int i = 0; i < 15; i++) {  // Aumentar la cantidad de guns
+    for (int i = 0; i < numGuns; i++) {  // Aumentar la cantidad de guns
         int x = rand() % (RENDER_WIDTH - 35);
         int y = rand() % (RENDER_HEIGHT - 10);
 
@@ -172,7 +172,7 @@ void initializeGameOfLife() {
             { 0, 0 }, { 1, 0 }, { 2, 0 }, { 0, 1 }, { 1, 2 }
     };
 
-    for (int i = 0; i < 50; i++) {  // Mantener la cantidad de small gliders
+    for (int i = 0; i < numSmallGlider; i++) {  // Mantener la cantidad de small gliders
         int x = rand() % (RENDER_WIDTH - 2);
         int y = rand() % (RENDER_HEIGHT - 2);
 

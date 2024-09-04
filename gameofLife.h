@@ -122,14 +122,14 @@ void updateGameOfLife() {
     memcpy(framebuffer, newFramebuffer, sizeof(framebuffer));
 }
 
-void initializeGameOfLife() {
+void initializeGameOfLife(int numGliders, int numGuns, int numSmallGliders) {
     memset(framebuffer, 0, sizeof(framebuffer));
 
     vector<pair<int, int>> gliderPattern = {
-            { 1, 0 }, { 2, 1 }, { 0, 2 }, { 1, 2 }, { 2, 2 }
+        { 1, 0 }, { 2, 1 }, { 0, 2 }, { 1, 2 }, { 2, 2 }
     };
 
-    for (int i = 0; i < 30; i++) {  // Aumentar la cantidad de gliders
+    for (int i = 0; i < numGliders; i++) {
         int x = rand() % (RENDER_WIDTH - 5);
         int y = rand() % (RENDER_HEIGHT - 5);
 
@@ -141,15 +141,15 @@ void initializeGameOfLife() {
     }
 
     vector<pair<int, int>> gunPattern = {
-            { 0, 4 }, { 1, 4 }, { 0, 5 }, { 1, 5 }, { 10, 4 }, { 10, 5 }, { 10, 6 },
-            { 11, 3 }, { 11, 7 }, { 12, 2 }, { 12, 8 }, { 13, 2 }, { 13, 8 }, { 14, 5 },
-            { 15, 3 }, { 15, 7 }, { 16, 4 }, { 16, 5 }, { 16, 6 }, { 17, 5 }, { 20, 2 },
-            { 20, 3 }, { 20, 4 }, { 21, 2 }, { 21, 3 }, { 21, 4 }, { 22, 1 }, { 22, 5 },
-            { 24, 0 }, { 24, 1 }, { 24, 5 }, { 24, 6 }, { 34, 2 }, { 34, 3 }, { 35, 2 },
-            { 35, 3 }
+        { 0, 4 }, { 1, 4 }, { 0, 5 }, { 1, 5 }, { 10, 4 }, { 10, 5 }, { 10, 6 },
+        { 11, 3 }, { 11, 7 }, { 12, 2 }, { 12, 8 }, { 13, 2 }, { 13, 8 }, { 14, 5 },
+        { 15, 3 }, { 15, 7 }, { 16, 4 }, { 16, 5 }, { 16, 6 }, { 17, 5 }, { 20, 2 },
+        { 20, 3 }, { 20, 4 }, { 21, 2 }, { 21, 3 }, { 21, 4 }, { 22, 1 }, { 22, 5 },
+        { 24, 0 }, { 24, 1 }, { 24, 5 }, { 24, 6 }, { 34, 2 }, { 34, 3 }, { 35, 2 },
+        { 35, 3 }
     };
 
-    for (int i = 0; i < 15; i++) {  // Aumentar la cantidad de guns
+    for (int i = 0; i < numGuns; i++) {
         int x = rand() % (RENDER_WIDTH - 35);
         int y = rand() % (RENDER_HEIGHT - 10);
 
@@ -161,10 +161,10 @@ void initializeGameOfLife() {
     }
 
     vector<pair<int, int>> smallGliderPattern = {
-            { 0, 0 }, { 1, 0 }, { 2, 0 }, { 0, 1 }, { 1, 2 }
+        { 0, 0 }, { 1, 0 }, { 2, 0 }, { 0, 1 }, { 1, 2 }
     };
 
-    for (int i = 0; i < 50; i++) {  // Mantener la cantidad de small gliders
+    for (int i = 0; i < numSmallGliders; i++) {
         int x = rand() % (RENDER_WIDTH - 2);
         int y = rand() % (RENDER_HEIGHT - 2);
 

@@ -131,12 +131,15 @@ void renderGIF(SDL_Renderer* renderer, const vector<SDL_Texture*>& gifTextures, 
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <max_gifs>" << endl;
+    if (argc < 4) {
+        cerr << "Usage: " << argv[0] << " <max_gifs> <num_glider> <num_guns> <num_smallGliders> " << endl;
         return 1;
     }
 
     int max_gifs = atoi(argv[1]);
+    int num_glider = atoi(argv[2]);
+    int num_gun = atoi(argv[3]);
+    int num_small_glider = atoi(argv[4]);
 
     if (max_gifs <= 0) {
         cerr << "The number of GIFs must be greater than 0." << endl;
@@ -193,7 +196,7 @@ int main(int argc, char* argv[]) {
     }
 
     srand(time(nullptr));
-    initializeGameOfLife();
+    initializeGameOfLife(num_glider, num_gun, num_small_glider);
 
     // Lista para almacenar todas las instancias de GIFs
     vector<GIFInstance> gifs;
@@ -211,6 +214,8 @@ int main(int argc, char* argv[]) {
     // Inicializa las variables del contador de FPS
     Uint32 frameStart;
     int frameTime;
+    Uint32 totalExecutionTime = 0; // Variable para almacenar el tiempo total de ejecución
+
     while (running) {
         frameStart = SDL_GetTicks();
         while (SDL_PollEvent(&e) != 0) {
@@ -267,6 +272,8 @@ int main(int argc, char* argv[]) {
 
         // Calcular el tiempo que tomó procesar y renderizar
         frameTime = SDL_GetTicks() - frameStart;
+        totalExecutionTime += frameTime; // Sumar el tiempo de ejecución de este frame al tiempo total
+
 
         // Esperar hasta el siguiente frame
         if (frameTime < FRAME_TIME) {
@@ -286,6 +293,9 @@ int main(int argc, char* argv[]) {
             SDL_SetWindowTitle(window, title);
         }
     }
+
+    // Imprimir el tiempo total de ejecución al final
+    cout << "Total Execution Time (Sequential): " << totalExecutionTime << " ms" << endl;
 
     for (auto& texture : gifTextures) {
         SDL_DestroyTexture(texture);
