@@ -115,12 +115,16 @@ IMG_Animation* loadGIF(const char* filePath) {
 // Función para renderizar el GIF en la pantalla
 void renderGIF(SDL_Renderer* renderer, const vector<SDL_Texture*>& gifTextures, IMG_Animation* gifAnimation, int x, int y, int w, int h, bool flip) {
     static int frame = 0;
-    static Uint32 frameTime = SDL_GetTicks();
-
+    static Uint32 lastFrameTime = SDL_GetTicks();
     Uint32 currentTime = SDL_GetTicks();
-    if (currentTime - frameTime >= gifAnimation->delays[frame]) {
+
+    // Calcula el tiempo transcurrido desde el último cambio de marco
+    Uint32 deltaTime = currentTime - lastFrameTime;
+
+    // Si ha pasado el tiempo necesario para el siguiente marco
+    if (deltaTime >= gifAnimation->delays[frame]) {
         frame = (frame + 1) % gifAnimation->count;
-        frameTime = currentTime;
+        lastFrameTime = currentTime;
     }
 
     SDL_Rect dstRect = { x, y, w, h };
@@ -179,10 +183,9 @@ int main(int argc, char* argv[]) {
     if (!window) return 1;
 
     setWindowIcon(window, "files/codificacion.png");
-
     SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     SDL_SetCursor(cursor);
-
+    
     SDL_Renderer* renderer = createRenderer(window);
     if (!renderer) return 1;
 
@@ -195,7 +198,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < gifAnimation->count; ++i) {
         gifTextures[i] = SDL_CreateTextureFromSurface(renderer, gifAnimation->frames[i]);
     }
-
 
     srand(time(nullptr));
     initializeGameOfLife(num_glider, num_gun, num_small_glider);
@@ -213,79 +215,84 @@ int main(int argc, char* argv[]) {
     bool running = true;
     SDL_Event e;
 
-    omp_set_num_threads(max_gifs);
-
-    // Inicializa las variables del contador de FPS
     Uint32 frameStart;
     int frameTime;
+    Uint32 totalExecutionTime = 0; // Variable para medir el tiempo total de ejecución
+
     while (running) {
         frameStart = SDL_GetTicks();
+        
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 running = false;
             }
         }
 
-        // Bandera para controlar si se ha añadido un nuevo GIF en este frame
         bool newGifAdded = false;
 
-        // Actualizar las posiciones de todos los GIFs
-        #pragma omp parallel for shared(gifs, flipFlags, max_gifs, newGifAdded) default(none)
-        for (size_t i = 0; i < gifs.size(); ++i) {
-            gifs[i].posX += gifs[i].velX;
-            gifs[i].posY += gifs[i].velY;
+        // Actualizar las posiciones de todos los GIFs en paralelo
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (size_t i = 0; i < gifs.size(); ++i) {
+                gifs[i].posX += gifs[i].velX;
+                gifs[i].posY += gifs[i].velY;
 
-            bool bounced = false;
+                bool bounced = false;
 
-            // Rebotar en los bordes de la ventana
-            if (gifs[i].posX <= 0 || gifs[i].posX + 120 >= WIDTH) {
-                gifs[i].velX = -gifs[i].velX;
-                flipFlags[i] = !flipFlags[i]; // Voltear la imagen horizontalmente
-                bounced = true;
-            }
-            if (gifs[i].posY <= 0 || gifs[i].posY + 30 >= HEIGHT) {
-                gifs[i].velY = -gifs[i].velY;
-                bounced = true;
-            }
+                // Rebotar en los bordes de la ventana
+                if (gifs[i].posX <= 0 || gifs[i].posX + 120 >= WIDTH) {
+                    gifs[i].velX = -gifs[i].velX;
+                    flipFlags[i] = !flipFlags[i]; // Voltear la imagen horizontalmente
+                    bounced = true;
+                }
+                if (gifs[i].posY <= 0 || gifs[i].posY + 30 >= HEIGHT) {
+                    gifs[i].velY = -gifs[i].velY;
+                    bounced = true;
+                }
 
-            // Si ha rebotado, aún no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
-            #pragma omp critical
-            {
+                // Si ha rebotado, aún no hemos alcanzado el máximo de GIFs, y no se ha añadido un nuevo GIF en este frame
                 if (bounced && gifs.size() < max_gifs && !newGifAdded) {
                     int newPosX = rand() % (WIDTH - 120);
                     int newPosY = rand() % (HEIGHT - 30);
                     int newVelX = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
                     int newVelY = (rand() % 7 + 1) * (rand() % 2 == 0 ? 1 : -1);
 
-                    gifs.push_back({newPosX, newPosY, newVelX, newVelY});
-                    flipFlags.push_back(newVelX < 0); // Determina si el nuevo GIF debe estar volteado inicialmente
-                    newGifAdded = true; // Marcar que se ha añadido un GIF en este frame
+                    #pragma omp critical
+                    {
+                        if (gifs.size() < max_gifs && !newGifAdded) {
+                            gifs.push_back({newPosX, newPosY, newVelX, newVelY});
+                            flipFlags.push_back(newVelX < 0); // Determina si el nuevo GIF debe estar volteado inicialmente
+                            newGifAdded = true; // Marcar que se ha añadido un GIF en este frame
+                        }
+                    }
                 }
             }
         }
 
         updateGameOfLife();
 
+        // Limpiar la pantalla
+        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
         renderBuffer(renderer); // Renderiza el Game of Life en el fondo
 
         // Renderizar todos los GIFs
-        #pragma omp parallel for shared(gifs, flipFlags, gifTextures) default(none)
         for (size_t i = 0; i < gifs.size(); ++i) {
-            renderGIF(renderer, gifTextures, gifAnimation, gifs[i].posX, gifs[i].posY, 165, 65, flipFlags[i]);
+            renderGIF(renderer, gifTextures, gifAnimation, gifs[i].posX, gifs[i].posY, 160, 60, flipFlags[i]);
         }
 
+        // Presentar el renderizador
         SDL_RenderPresent(renderer);
 
-        // Calcular el tiempo que tomó procesar y renderizar
         frameTime = SDL_GetTicks() - frameStart;
+        totalExecutionTime += frameTime; // Acumular el tiempo de ejecución
 
-        // Esperar hasta el siguiente frame
+        frameTime = SDL_GetTicks() - frameStart;
         if (frameTime < FRAME_TIME) {
             SDL_Delay(FRAME_TIME - frameTime);
         }
 
-        // Actualización de FPS
         frameCount++;
         if (SDL_GetTicks() - startTime >= 1000) {  // Cada segundo
             fps = frameCount / ((SDL_GetTicks() - startTime) / 1000.0f);
@@ -294,29 +301,19 @@ int main(int argc, char* argv[]) {
 
             // Actualiza el título de la ventana con los FPS
             char title[50];
-            snprintf(title, sizeof(title), "[ScreenSaver- Parallel] - FPS: %.2f", fps);
+            snprintf(title, sizeof(title), "[ScreenSaver - Parallel] - FPS: %.2f", fps);
             SDL_SetWindowTitle(window, title);
         }
     }
 
-    // Liberar recursos
-    for (auto& texture : gifTextures) {
+    // Imprimir el tiempo total de ejecución al final
+    cout << "Total Execution Time: " << totalExecutionTime << " ms" << endl;
+
+    // Limpiar recursos
+    for (auto texture : gifTextures) {
         SDL_DestroyTexture(texture);
     }
-
-    for (int i = 0; i < gifAnimation->count; ++i) {
-        SDL_FreeSurface(gifAnimation->frames[i]);
-    }
-    
-    SDL_free(gifAnimation);
-
     IMG_Quit();
-
-    SDL_PauseAudioDevice(audioDevice, 1);
-    SDL_CloseAudioDevice(audioDevice);
-
-    SDL_FreeWAV(wavBuffer);
-    SDL_FreeCursor(cursor);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
