@@ -53,7 +53,7 @@ for ((i=1; i<=NUM_ITERATIONS; i++)); do
 
     # Ejecutar el programa paralelo
     echo "Running parallel program..."
-    par_time=$(run_program "mainParalelo2" $max_gifs $gliders $guns $small_gliders)
+    par_time=$(run_program "mainParalelo4" $max_gifs $gliders $guns $small_gliders)
     echo "Parallel execution time: $par_time ms"
 
     # Calcular speedup y eficiencia
